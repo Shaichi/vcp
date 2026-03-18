@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Công dân - Quản trị VCP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .topbar { background:#fff; border-bottom:1px solid #dee2e6; padding:.75rem 1.5rem; }
+        .card { border:none; border-radius:.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .bg-primary { background-color: #0056b3 !important; }
+        .btn-primary { background-color: #0056b3; border-color: #0056b3; }
+        .btn-primary:hover { background-color: #004494; border-color: #004494; }
+        .badge-active { background-color: #28a745; color: white; }
+        .badge-unranked { background-color: #6c757d; color: white; }
+        .badge-basic { background-color: #17a2b8; color: white; }
+    </style>
+</head>
+<body>
+<div class="d-flex" style="min-height:100vh;">
+
+    <!-- Sidebar -->
+    <div th:insert="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="flex-grow-1">
+        <!-- Topbar -->
+        <div class="topbar d-flex justify-content-between align-items-center">
+            <span class="fw-semibold text-muted">Quản lý Công dân</span>
+            <span class="text-muted small"><i class="fas fa-user-circle me-1"></i> Quản trị viên</span>
+        </div>
+
+        <!-- Page Content -->
+        <div class="container-fluid p-4">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h1 class="h4 fw-bold text-dark mb-0">Danh mục Công dân &amp; Điều chỉnh điểm (UC-07)</h1>
+            </div>
+
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex align-items-center py-3 bg-primary text-white">
+                    <i class="fas fa-users me-2"></i>
+                    <h6 class="m-0 fw-bold">Tất cả Công dân đã đăng ký</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Số định danh (CCCD)</th>
+                                    <th>Họ và tên</th>
+                                    <th>Hạng hiện tại</th>
+                                    <th class="text-center">Tổng điểm</th>
+                                    <th class="text-center">Điểm năm tài chính</th>
+                                    <th>Trạng thái</th>
+                                    <th class="text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="citizen : ${citizens}">
+                                    <td class="ps-3"><code th:text="${citizen.cccdNumber}">001099000123</code></td>
+                                    <td th:text="${citizen.fullName}">Full Name</td>
+                                    <td>
+                                        <span th:class="'badge badge-' + ${#strings.toLowerCase(citizen.currentRank)}" 
+                                              th:text="${citizen.currentRank.displayName}">RANK</span>
+                                    </td>
+                                    <td class="text-center fw-bold" th:text="${citizen.totalPoints}">0.00</td>
+                                    <td class="text-center" th:text="${citizen.fiscalYearPoints}">0.00</td>
+                                    <td>
+                                        <span th:class="${citizen.accountStatus.name() == 'ACTIVE' ? 'badge bg-success' : 'badge bg-danger'}" 
+                                              th:text="${citizen.accountStatus}">STATUS</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-warning btn-sm" 
+                                                th:data-cccd="${citizen.cccdNumber}"
+                                                th:data-name="${citizen.fullName}"
+                                                onclick="openAdjustModal(this)">
+                                            <i class="fas fa-edit me-1"></i> Điều chỉnh điểm
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(citizens)}">
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="fas fa-user-slash fa-2x mb-2 d-block"></i>
+                                        Chưa có công dân nào trong hệ thống.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Points Modal -->
+<div class="modal fade" id="adjustPointsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/admin/citizens/adjust-points}" method="post">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-hand-holding-usd me-1"></i> Điều chỉnh điểm Công dân</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="cccdNumber" id="modalCccd">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Công dân:</label>
+                        <input type="text" class="form-control-plaintext fw-bold" id="modalName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số tiền điều chỉnh (+/-):</label>
+                        <input type="number" step="0.01" class="form-control" name="points" required placeholder="Ví dụ: 5.5 hoặc -10">
+                        <small class="text-muted">Nhập số dương để cộng điểm, số âm để trừ điểm.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Lý do điều chỉnh:</label>
+                        <textarea class="form-control" name="reason" rows="3" required placeholder="Ví dụ: Bổ sung điểm dịch vụ công còn thiếu ngày 15/03"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-warning fw-bold">Áp dụng thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function openAdjustModal(btn) {
+        const cccd = btn.getAttribute('data-cccd');
+        const name = btn.getAttribute('data-name');
+        
+        document.getElementById('modalCccd').value = cccd;
+        document.getElementById('modalName').value = name;
+        
+        new bootstrap.Modal(document.getElementById('adjustPointsModal')).show();
+    }
+</script>
+</body>
+</html>

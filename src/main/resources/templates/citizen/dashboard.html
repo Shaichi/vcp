@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Citizen Dashboard - VNeID Civic Point</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; }
+        .navbar { background-color: #0056b3; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; background-color: rgba(255,255,255,0.2); }
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card-header { border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem; }
+        .card-header h3 { margin: 0; color: #333; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .stat-box { background: #e9ecef; padding: 1rem; border-radius: 4px; text-align: center; }
+        .stat-box .value { font-size: 1.5rem; font-weight: bold; color: #0056b3; margin: 0.5rem 0; }
+        .stat-box .label { color: #666; font-size: 0.9rem; text-transform: uppercase; }
+        .progress-bar-container { background-color: #e9ecef; border-radius: 4px; height: 1.5rem; width: 100%; overflow: hidden; margin-top: 1rem; }
+        .progress-bar { background-color: #28a745; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold; }
+        .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .badge-active { background-color: #28a745; color: white; }
+        .badge-unranked { background-color: #6c757d; color: white; }
+        .badge-basic { background-color: #17a2b8; color: white; }
+        .badge-high { background-color: #ffc107; color: black; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h2>VNeID Civic Point</h2>
+        <div>
+            <span style="margin-right: 1rem;" sec:authentication="name">Người dùng</span>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" style="background:none; border:none; color:white; cursor:pointer; text-decoration:underline;">Đăng xuất</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <div th:if="${error}" class="card" style="border-left: 4px solid red;">
+            <p style="color: red; margin: 0;" th:text="${error}"></p>
+        </div>
+
+        <div th:if="${profile}" class="card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Hồ sơ Công dân</h3>
+                <span th:class="'badge badge-' + ${#strings.toLowerCase(profile.currentRank)}" th:text="${profile.currentRank.displayName}">HẠNG</span>
+            </div>
+            
+            <p><strong>Họ và tên:</strong> <span th:text="${profile.fullName}">Tên</span></p>
+            <p><strong>Số định danh (CCCD):</strong> <span th:text="${profile.maskedCccd}">***</span></p>
+            <p><strong>Trình trạng tài khoản:</strong> <span th:text="${profile.status}">Đang hoạt động</span></p>
+            
+            <h4 style="margin-top: 2rem;">Tổng quan về Điểm</h4>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="label">Tổng điểm tích lũy</div>
+                    <div class="value" th:text="${profile.totalPoints}">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Điểm trong năm tài chính</div>
+                    <div class="value" th:text="${profile.fiscalYearPoints}">0</div>
+                </div>
+            </div>
+
+            <h4 style="margin-top: 2rem;">Tiến trình lên Hạng kế tiếp</h4>
+            <div class="progress-bar-container">
+                <div class="progress-bar" th:style="'width: ' + ${profile.rankProgressBar}" th:text="${profile.rankProgressBar}"></div>
+            </div>
+            
+            <h4 style="margin-top: 2rem; border-bottom: 2px solid #0056b3; padding-bottom: 0.5rem;">Giao dịch Điểm gần đây</h4>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; border: 1px solid #ddd;">
+                <thead>
+                    <tr style="background-color: #f8f9fa; border-bottom: 2px solid #ddd; text-align: left;">
+                        <th style="padding: 12px; border: 1px solid #ddd;">Ngày tháng</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">Hoạt động</th>
+                        <th style="padding: 12px; border: 1px solid #ddd;">Loại</th>
+                        <th style="padding: 12px; border: 1px solid #ddd; text-align: right;">Số điểm</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Check if empty -->
+                    <tr th:if="${#lists.isEmpty(profile.recentLedgers)}">
+                        <td colspan="4" style="padding: 12px; text-align: center; color: #666;">Không tìm thấy giao dịch nào gần đây.</td>
+                    </tr>
+                    <!-- Loop through ledgers -->
+                    <tr th:each="ledger : ${profile.recentLedgers}" style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 12px; border: 1px solid #ddd;" th:text="${#temporals.format(ledger.createdAt, 'dd-MM-yyyy HH:mm')}">Ngày</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">
+                            <span th:text="${ledger.activityName}">Hoạt động</span>
+                            <div th:if="${ledger.rejectionReason != null}" style="color: red; font-size: 0.8rem;" 
+                                 th:text="${ledger.transactionType.name() == 'ADJUSTMENT' ? 'Lý do: ' : 'Từ chối: '} + ${ledger.rejectionReason}"></div>
+                        </td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">
+                            <span class="badge" th:classappend="${ledger.transactionType.name() == 'EARNED' ? 'badge-active' : 'badge-basic'}" th:text="${ledger.transactionType.displayName}">Loại</span>
+                        </td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: right; font-weight: bold;" 
+                            th:styleappend="${ledger.pointsAwarded > 0 ? 'color: #28a745;' : (ledger.pointsAwarded < 0 ? 'color: #dc3545;' : 'color: #6c757d;')}"
+                            th:text="${(ledger.pointsAwarded > 0 ? '+' : '') + ledger.pointsAwarded}">+0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</body>
+</html>

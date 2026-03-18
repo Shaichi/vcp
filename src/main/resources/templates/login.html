@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>VNeID Civic Point - Login</title>
+    <!-- Add simple styling -->
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: .5rem; font-weight: bold; }
+        input[type="text"], input[type="password"] { width: 100%; padding: .5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: .75rem; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+        button:hover { background-color: #004494; }
+        .error { color: red; margin-bottom: 1rem; }
+        .logout { color: green; margin-bottom: 1rem; }
+        .demo-info { margin-top: 1.5rem; padding: 1rem; background-color: #e9ecef; border-radius: 4px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2 style="text-align: center; color: #333;">VNeID Civic Point</h2>
+        <p style="text-align: center; color: #666;">Cổng Đăng Nhập dành cho Công Dân</p>
+        
+        <div th:if="${param.error}" class="error">
+            Số định danh hoặc mật khẩu không chính xác.
+        </div>
+        <div th:if="${param.logout}" class="logout">
+            Bạn đã đăng xuất thành công.
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="form-group">
+                <label for="username">Số định danh cá nhân (CCCD)</label>
+                <input type="text" id="username" name="username" autofocus="autofocus" required />
+            </div>
+            <div class="form-group">
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" name="password" required />
+            </div>
+            <button type="submit">Đăng nhập</button>
+        </form>
+
+        <div class="demo-info">
+            <strong>Tài khoản Demo:</strong><br/>
+            Số định danh: <code>001099000123</code><br/>
+            Mật khẩu: <code>password</code>
+        </div>
+    </div>
+</body>
+</html>

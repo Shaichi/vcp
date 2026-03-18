@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="sidebar" class="sidebar d-flex flex-column shadow-sm" style="min-height:100vh; min-width:260px; background-color: #0056b3; color:#fff;">
+    <div class="d-flex align-items-center justify-content-center p-3" style="border-bottom:1px solid rgba(255,255,255,0.2)">
+        <i class="fas fa-shield-alt fa-lg me-2"></i>
+        <strong>VCP Quản trị</strong>
+    </div>
+    <ul class="nav flex-column mt-2">
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex align-items-center gap-2 px-3 py-2" 
+               style="opacity:0.85;" href="/admin/dashboard"
+               onmouseover="this.style.opacity='1';this.style.background='rgba(255,255,255,0.1)'" 
+               onmouseout="this.style.opacity='0.85';this.style.background='transparent'">
+                <i class="fas fa-fw fa-tachometer-alt"></i> Bảng điều khiển
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex align-items-center gap-2 px-3 py-2" 
+               style="opacity:0.85;" href="/admin/rules"
+               onmouseover="this.style.opacity='1';this.style.background='rgba(255,255,255,0.1)'" 
+               onmouseout="this.style.opacity='0.85';this.style.background='transparent'">
+                <i class="fas fa-fw fa-list-check"></i> Quy tắc tính điểm
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex align-items-center gap-2 px-3 py-2" 
+               style="opacity:0.85;" href="/admin/tiers"
+               onmouseover="this.style.opacity='1';this.style.background='rgba(255,255,255,0.1)'" 
+               onmouseout="this.style.opacity='0.85';this.style.background='transparent'">
+                <i class="fas fa-fw fa-layer-group"></i> Hạng mức
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white d-flex align-items-center gap-2 px-3 py-2" 
+               style="opacity:0.85;" href="/admin/citizens"
+               onmouseover="this.style.opacity='1';this.style.background='rgba(255,255,255,0.1)'" 
+               onmouseout="this.style.opacity='0.85';this.style.background='transparent'">
+                <i class="fas fa-fw fa-users"></i> Quản lý Công dân
+            </a>
+        </li>
+        <li class="nav-item mt-3 pt-3" style="border-top:1px solid rgba(255,255,255,0.2)">
+            <form th:action="@{/admin/logout}" method="post" class="px-3">
+                <button type="submit" class="btn btn-danger btn-sm w-100">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </button>
+            </form>
+        </li>
+    </ul>
+</nav>
+</body>
+</html>

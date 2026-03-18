@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quy tắc tính điểm - Quản trị VCP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .topbar { background:#fff; border-bottom:1px solid #dee2e6; padding:.75rem 1.5rem; }
+        .card { border:none; border-radius:.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .bg-primary { background-color: #0056b3 !important; }
+        .btn-primary { background-color: #0056b3; border-color: #0056b3; }
+        .btn-primary:hover { background-color: #004494; border-color: #004494; }
+    </style>
+</head>
+<body>
+<div class="d-flex" style="min-height:100vh;">
+
+    <!-- Sidebar -->
+    <div th:insert="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <!-- Main Content -->
+    <div class="flex-grow-1">
+        <!-- Topbar -->
+        <div class="topbar d-flex justify-content-between align-items-center">
+            <span class="fw-semibold text-muted">Quản lý Quy tắc tính điểm</span>
+            <span class="text-muted small"><i class="fas fa-user-circle me-1"></i> Quản trị viên</span>
+        </div>
+
+        <!-- Page Content -->
+        <div class="container-fluid p-4">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h1 class="h4 fw-bold text-dark mb-0">Quy tắc tính điểm (UC-05)</h1>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRuleModal">
+                    <i class="fas fa-plus me-1"></i> Thêm Quy tắc mới
+                </button>
+            </div>
+
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-1"></i> <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex align-items-center py-3 bg-primary text-white">
+                    <i class="fas fa-list-check me-2"></i>
+                    <h6 class="m-0 fw-bold">Danh sách tất cả Quy tắc</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Mã</th>
+                                    <th>Danh mục</th>
+                                    <th>Tên hoạt động</th>
+                                    <th class="text-center">Số điểm</th>
+                                    <th>Tần suất</th>
+                                    <th>Phê duyệt</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hiệu lực</th>
+                                    <th class="text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="rule : ${rules}" 
+                                    th:class="${rule.approvalStatus == 'PENDING'} ? 'table-warning' : (${rule.status != null && rule.status.name() == 'INACTIVE'} ? 'table-secondary text-muted' : '')">
+                                    <td class="ps-3"><code th:text="${rule.activityCode}">CODE</code></td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border" th:text="${rule.activityCategory.displayName}">CAT</span>
+                                    </td>
+                                    <td th:text="${rule.activityName}">NAME</td>
+                                    <td class="text-center fw-bold text-success" th:text="${rule.pointValue}">0</td>
+                                    <td>
+                                        <span th:if="${rule.frequencyLimit != null}" 
+                                              th:text="${rule.frequencyLimit + ' lần / ' + rule.frequencyPeriod}" class="small"></span>
+                                        <span th:if="${rule.frequencyLimit == null}" class="text-muted small">Không giới hạn</span>
+                                    </td>
+                                    <td>
+                                        <span th:class="${rule.approvalStatus == 'APPROVED' ? 'badge bg-success' : (rule.approvalStatus == 'PENDING' ? 'badge bg-warning text-dark' : 'badge bg-danger')}" 
+                                              th:text="${rule.approvalStatus}">STATUS</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${rule.status != null && rule.status.name() == 'ACTIVE'}" class="badge bg-primary">ĐANG HOẠT ĐỘNG</span>
+                                        <span th:if="${rule.status != null && rule.status.name() == 'INACTIVE'}" class="badge bg-secondary">NGỪNG HOẠT ĐỘNG</span>
+                                    </td>
+                                    <td class="small">
+                                        <div th:text="'Từ: ' + ${#temporals.format(rule.validFrom, 'dd/MM/yyyy')}"></div>
+                                        <div class="text-danger" th:if="${rule.validTo != null}" 
+                                             th:text="'Đến: ' + ${#temporals.format(rule.validTo, 'dd/MM/yyyy')}"></div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <!-- Checker: Approve -->
+                                            <form th:if="${rule.approvalStatus == 'PENDING'}" 
+                                                  th:action="@{/admin/rules/{id}/approve(id=${rule.ruleId})}" method="post">
+                                                <button type="submit" class="btn btn-success btn-sm" title="Approve">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                            <!-- Checker: Reject -->
+                                            <form th:if="${rule.approvalStatus == 'PENDING'}" 
+                                                  th:action="@{/admin/rules/{id}/reject(id=${rule.ruleId})}" method="post">
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Reject">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                            <!-- Edit Rule -->
+                                            <button type="button" class="btn btn-primary btn-sm" title="Edit / New Version"
+                                                    th:data-id="${rule.ruleId}"
+                                                    th:data-code="${rule.activityCode}"
+                                                    th:data-category="${rule.activityCategory}"
+                                                    th:data-name="${rule.activityName}"
+                                                    th:data-points="${rule.pointValue}"
+                                                    th:data-limit="${rule.frequencyLimit}"
+                                                    th:data-period="${rule.frequencyPeriod}"
+                                                    onclick="editRule(this)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            
+                                            <!-- Deactivate (Soft Delete) -->
+                                            <form th:if="${rule.approvalStatus == 'APPROVED' and rule.status != null and rule.status.name() == 'ACTIVE' and rule.validTo == null}" 
+                                                  th:action="@{/admin/rules/{id}/delete(id=${rule.ruleId})}" method="post">
+                                                <button type="submit" class="btn btn-warning btn-sm" title="Deactivate (Soft Delete)"
+                                                        onclick="return confirm('Deactivate this rule? It will no longer earn points for future activities.');">
+                                                    <i class="fas fa-ban"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(rules)}">
+                                    <td colspan="9" class="text-center py-4 text-muted">
+                                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                        Chưa có quy tắc nào được cấu hình.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Rule Modal -->
+<div class="modal fade" id="addRuleModal" tabindex="-1" aria-labelledby="addRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form th:action="@{/admin/rules/create}" method="post" th:object="${newRule}">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addRuleModalLabel">
+                        <i class="fas fa-plus me-1"></i> Đề xuất Quy tắc tính điểm mới
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small mb-3">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Quy tắc mới sẽ ở trạng thái <strong>CHỜ DUYỆT</strong>. 
+                        Để cập nhật quy tắc hiện có, vui lòng nhập đúng <strong>Mã Hoạt động</strong>.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mã Hoạt động <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" th:field="*{activityCode}" required 
+                                   placeholder="VD: HIEN_MAU, DONG_THUE">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Danh mục <span class="text-danger">*</span></label>
+                            <select class="form-select" th:field="*{activityCategory}" required>
+                                <option value="">-- Chọn Danh mục --</option>
+                                <option value="IDENTITY">IDENTITY - Định danh &amp; Hồ sơ</option>
+                                <option value="SERVICE">SERVICE - Dịch vụ công</option>
+                                <option value="FINANCIAL">FINANCIAL - Tài chính</option>
+                                <option value="HEALTHCARE">HEALTHCARE - Y tế</option>
+                                <option value="EDUCATION">EDUCATION - Giáo dục</option>
+                                <option value="CIVIC">CIVIC - Cộng đồng &amp; Dân sự</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Tên hoạt động (Hiển thị cho Công dân) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" th:field="*{activityName}" required 
+                                   placeholder="Ví dụ: Hiến máu nhân đạo">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Số điểm <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" th:field="*{pointValue}" min="1" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Giới hạn số lần</label>
+                            <input type="number" class="form-control" th:field="*{frequencyLimit}" min="1" placeholder="Để trống = Không giới hạn">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Chu kỳ giới hạn</label>
+                            <select class="form-select" th:field="*{frequencyPeriod}">
+                                <option value="">Không giới hạn</option>
+                                <option value="LIFETIME">LIFETIME (Duy nhất 1 lần)</option>
+                                <option value="ANNUAL">ANNUAL (Hàng năm)</option>
+                                <option value="MONTHLY">MONTHLY (Hàng tháng)</option>
+                                <option value="WEEKLY">WEEKLY (Hàng tuần)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i> Gửi duyệt
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function editRule(btn) {
+        const id = btn.getAttribute('data-id');
+        const code = btn.getAttribute('data-code');
+        const category = btn.getAttribute('data-category');
+        const name = btn.getAttribute('data-name');
+        const points = btn.getAttribute('data-points');
+        const limit = btn.getAttribute('data-limit');
+        const period = btn.getAttribute('data-period');
+
+        document.getElementById('addRuleModalLabel').innerHTML = '<i class="fas fa-edit me-1"></i> Sửa Quy tắc / Tạo Phiên bản mới';
+        
+        // Populate fields
+        document.querySelector('input[name="activityCode"]').value = code;
+        document.querySelector('select[name="activityCategory"]').value = category;
+        document.querySelector('input[name="activityName"]').value = name;
+        document.querySelector('input[name="pointValue"]').value = points;
+        document.querySelector('input[name="frequencyLimit"]').value = limit;
+        document.querySelector('select[name="frequencyPeriod"]').value = period;
+
+        // Open modal
+        new bootstrap.Modal(document.getElementById('addRuleModal')).show();
+    }
+</script>
+</body>
+</html>
