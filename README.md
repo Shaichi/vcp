@@ -31,7 +31,7 @@ src/main/resources/
 1. **Yêu cầu:**
    - Java 17 trở lên
    - Maven 3.6+
-   - MySQL (hoặc cấu hình lại DB trong `application.properties`)
+   - MS SQL (hoặc cấu hình lại DB trong `application.properties`)
 
 2. **Clone dự án:**
 ```bash
